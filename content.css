@@ -1,0 +1,66 @@
+#copyscreen-overlay {
+  all: initial !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  cursor: crosshair !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  z-index: 2147483647 !important;
+  user-select: none !important;
+  touch-action: none !important;
+}
+
+#copyscreen-overlay.copyscreen-dragging {
+  background: transparent !important;
+}
+
+#copyscreen-overlay .copyscreen-box {
+  position: absolute;
+  display: none;
+  box-sizing: border-box;
+  border: 2px dashed #4da3ff;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+#copyscreen-overlay.copyscreen-dragging .copyscreen-box {
+  display: block;
+}
+
+#copyscreen-overlay .copyscreen-hint,
+.copyscreen-toast {
+  font: 500 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  color: #fff !important;
+  background: rgba(20, 20, 24, 0.92) !important;
+  border-radius: 8px !important;
+  padding: 8px 14px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+#copyscreen-overlay .copyscreen-hint {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.copyscreen-toast {
+  position: fixed !important;
+  inset: auto 20px 20px auto !important;
+  margin: 0 !important;
+  border: 0 !important;
+  max-width: min(420px, calc(100vw - 40px)) !important;
+  z-index: 2147483647 !important;
+  border-left: 4px solid #4da3ff !important;
+}
+
+.copyscreen-toast.copyscreen-ok { border-left-color: #34a853 !important; }
+.copyscreen-toast.copyscreen-warn { border-left-color: #fbbc04 !important; }
+.copyscreen-toast.copyscreen-error { border-left-color: #ea4335 !important; }
