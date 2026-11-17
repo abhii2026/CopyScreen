@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
   "name": "CopyScreen",
-  "version": "1.0.0",
-  "description": "Draw a box around text on any video or page and copy it to the clipboard (offline OCR).",
+  "version": "1.1.0",
+  "description": "Draw a box on any video or page to copy its text (offline OCR) or take an annotated screenshot.",
   "minimum_chrome_version": "116",
   "permissions": ["activeTab", "scripting", "offscreen", "clipboardWrite"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "CopyScreen: select text to copy (Alt+Shift+C)",
+    "default_title": "CopyScreen: capture region (Alt+Shift+S) · quick copy text (Alt+Shift+C)",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -23,8 +23,12 @@
   },
   "commands": {
     "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+S" },
+      "description": "Capture a region: screenshot, draw, copy text or save"
+    },
+    "quick-copy-text": {
       "suggested_key": { "default": "Alt+Shift+C" },
-      "description": "Start a CopyScreen selection"
+      "description": "Quick copy text from a region (no editor)"
     }
   },
   "content_security_policy": {

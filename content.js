@@ -1,23 +1,30 @@
-// CopyScreen marquee tool. Injected on demand by background.js.
+// CopyScreen marquee tool. Injected on demand by background.js (after editor.js).
+// Modes: 'shot' (default) = screenshot the region, copy the image, open the editor
+//        (draw, copy text via OCR, save).
+//        'text' = quick path: OCR the region and copy the text, no editor.
 // Uses the popover top layer so it also sits above fullscreen videos.
 (() => {
-  if (window.__copyScreenActive) return;
+  if (window.__copyScreenActive || window.__copyScreenEditorOpen) return;
   window.__copyScreenActive = true;
 
+  const mode = window.__copyScreenMode === 'text' ? 'text' : 'shot';
   const MIN_SIZE = 5;
 
   const overlay = document.createElement('div');
   overlay.id = 'copyscreen-overlay';
   overlay.popover = 'manual';
+  overlay.dataset.mode = mode;
 
   const box = document.createElement('div');
   box.className = 'copyscreen-box';
   overlay.appendChild(box);
 
-  const hint = document.createElement('div');
-  hint.className = 'copyscreen-hint';
-  hint.textContent = 'Drag around the text to copy · Esc to cancel';
-  overlay.appendChild(hint);
+  const bar = document.createElement('div');
+  bar.className = 'copyscreen-bar';
+  bar.textContent = (mode === 'text'
+    ? 'Quick copy text: drag around the text'
+    : 'Drag to select an area') + ' · Esc to cancel';
+  overlay.appendChild(bar);
 
   document.documentElement.appendChild(overlay);
   overlay.showPopover();
@@ -33,7 +40,7 @@
     start = { x: e.clientX, y: e.clientY };
     rect = { x: start.x, y: start.y, w: 0, h: 0 };
     overlay.classList.add('copyscreen-dragging');
-    hint.remove();
+    bar.remove();
     draw();
   }
 
@@ -58,15 +65,15 @@
     const selection = rect;
     cleanup();
     if (selection.w < MIN_SIZE || selection.h < MIN_SIZE) return;
-    run(selection);
+    if (mode === 'shot') runShot(selection);
+    else runText(selection);
   }
 
   function onKeyDown(e) {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      cleanup();
-    }
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    e.stopPropagation();
+    cleanup();
   }
 
   function draw() {
@@ -90,10 +97,14 @@
   overlay.addEventListener('contextmenu', (e) => { e.preventDefault(); cleanup(); });
   window.addEventListener('keydown', onKeyDown, true);
 
-  async function run(selection) {
-    // Let the overlay disappear from the rendered frame before the screenshot.
+  // Let the overlay disappear from the rendered frame before the screenshot.
+  async function waitForRepaint() {
     await nextFrame();
     await nextFrame();
+  }
+
+  async function runText(selection) {
+    await waitForRepaint();
     try {
       const cap = await chrome.runtime.sendMessage({
         type: 'cs-capture',
@@ -120,6 +131,41 @@
       console.warn('CopyScreen:', err);
       toast('CopyScreen error: ' + err.message, 'error', 4000);
     }
+  }
+
+  async function runShot(selection) {
+    await waitForRepaint();
+    try {
+      const res = await chrome.runtime.sendMessage({ type: 'cs-shot' });
+      if (!res || res.error) throw new Error(res?.error || 'Screenshot failed');
+      const { canvas, scale } = await cropScreenshot(res.dataUrl, selection);
+      window.__copyScreenEditor.open(canvas, scale);
+    } catch (err) {
+      console.warn('CopyScreen:', err);
+      toast('CopyScreen error: ' + err.message, 'error', 4000);
+    }
+  }
+
+  // Decode the data URL by hand (no <img>/fetch) so page CSP can't block it.
+  async function cropScreenshot(dataUrl, sel) {
+    const bin = atob(dataUrl.slice(dataUrl.indexOf(',') + 1));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const img = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+
+    // Screenshot pixels per CSS pixel (covers devicePixelRatio and page zoom).
+    const scale = img.width / window.innerWidth;
+    const sx = Math.max(0, Math.round(sel.x * scale));
+    const sy = Math.max(0, Math.round(sel.y * scale));
+    const sw = Math.min(img.width - sx, Math.round(sel.w * scale));
+    const sh = Math.min(img.height - sy, Math.round(sel.h * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = sw;
+    canvas.height = sh;
+    canvas.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+    img.close();
+    return { canvas, scale };
   }
 
   function toast(message, kind, duration) {
