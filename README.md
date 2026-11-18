@@ -15,9 +15,9 @@ Pausing the video on the frame you want is recommended.
 ### Capture: icon or Alt+Shift+S
 1. Click the CopyScreen icon or press **Alt+Shift+S**, then drag a rectangle around an area (**Esc** or right-click cancels).
 2. The image is **copied to the clipboard immediately**, so you can paste it right away. An editor opens:
-   - **Draw:** Pen `P`, Highlighter `H`, Arrow `A`, Rectangle `R`, Text `T` (Enter to place, Shift+Enter for a new line), 6 colors, 3 sizes, Undo `Ctrl+Z` / Redo `Ctrl+Y`. Every change is re-copied automatically.
+   - **Draw:** Pen `P`, Highlighter `H`, Arrow `A`, Rectangle `R`, Text `T` (Enter to place, Shift+Enter for a new line), 6 colors, 3 sizes, Undo `Ctrl+Z` / Redo `Ctrl+Y`. Drawings are not copied automatically; press **Copy image** when you're done.
    - **Copy text** (`Ctrl+Shift+C`): reads the words in the capture and copies them. They also appear in a panel under the image, where you can edit them and copy again.
-   - **Copy image** (`Ctrl+C`): copies the image again (e.g. after copying the text).
+   - **Copy image** (`Ctrl+C`): copies the image with your drawings (also handy after copying the text).
    - **Save** (`Ctrl+S`): downloads a PNG. Nothing is written to disk unless you save.
    - **Enter**, **Esc**, or **×**: done.
 

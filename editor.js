@@ -1,6 +1,6 @@
 // CopyScreen screenshot editor: shows the captured region, lets you draw on it,
-// and keeps the clipboard in sync with the current image. Nothing touches the
-// disk unless you press Save.
+// copies the plain capture once on open, and copies drawings only when you press
+// Copy image (Ctrl+C). Nothing touches the disk unless you press Save.
 // Exposes window.__copyScreenEditor.open(canvas, scale).
 (() => {
   if (window.__copyScreenEditor) return;
@@ -157,7 +157,7 @@
     const stage = el('div', 'stage');
     const canvas = el('canvas');
     const hint = el('div', 'hint',
-      'Image copied — paste it anywhere. Drawing updates the clipboard automatically. ' +
+      'Image copied — paste it anywhere. To copy your drawings, press Copy image (Ctrl+C). ' +
       'Copy text: Ctrl+Shift+C · Save: Ctrl+S · Done: Enter / Esc');
     stage.append(canvas);
 
@@ -185,7 +185,6 @@
     const redoStack = [];
     let draft = null;
     let activeText = null;
-    let copyTimer = null;
     let statusTimer = null;
 
     canvas.width = base.width;
@@ -413,7 +412,6 @@
     function changed() {
       render();
       refreshToolbar();
-      scheduleCopy();
     }
 
     // ---------- text tool ----------
@@ -467,16 +465,10 @@
       });
     }
 
-    function scheduleCopy() {
-      clearTimeout(copyTimer);
-      copyTimer = setTimeout(() => { copyTimer = null; copyNow(); }, 250);
-    }
-
     async function copyNow() {
-      clearTimeout(copyTimer);
-      copyTimer = null;
+      commitText(); // include text still being typed
       try {
-        // Passing the promise keeps the user-activation from the click/stroke.
+        // Passing the promise keeps the user-activation from the click/keypress.
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': toBlob() })]);
         setStatus('Image copied ✓');
       } catch (err) {
@@ -583,9 +575,8 @@
     const swallow = (e) => e.stopPropagation();
 
     // ---------- open / close ----------
-    async function close() {
+    function close() {
       commitText();
-      if (copyTimer) await copyNow(); // flush pending copy so the clipboard has the final image
       window.removeEventListener('keydown', onKeyDown, true);
       window.removeEventListener('keyup', swallow, true);
       window.removeEventListener('keypress', swallow, true);
